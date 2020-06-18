@@ -4,9 +4,22 @@
 	<title>Dashboard</title>
 </head>
 <body>
-	
-		<h3>{{ .Message }}</h3>
-
 <h1>Dashboard</h1>
+	<table style="width:100%">
+	  	<tr>
+		    <th>ID</th>
+		    <th>Username</th>
+		    <th>Password</th>
+		    <th>CreatedAt</th>
+	  	</tr>
+		{{ range $i,$u := . }}
+		<tr>
+		    <td>{{ $u.Id }}</td>
+		    <td>{{ $u.Username }}</td>
+		    <td>{{ $u.Password }}</td>
+		    <td>{{ $u.CreatedAt }}</td>
+		</tr>
+		{{ end }}
+	</table> 	
 </body>
 </html>

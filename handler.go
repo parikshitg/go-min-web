@@ -11,7 +11,7 @@ type User struct {
 	Id        string
 	Username  string
 	Password  string
-	CreatedAt time.Time
+	CreatedAt []uint8
 }
 
 type Data struct {
@@ -133,7 +133,29 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("ParseFiles: ", err)
 	}
 
-	err = page.Execute(w, nil)
+	// Read All users
+	rows, err := db.Query(`SELECT id, username, password, created_at FROM userss`)
+	if err != nil {
+		log.Println("Error Read ALl : ", err)
+	}
+
+	var users []User
+
+	for rows.Next() {
+		var u User
+		err := rows.Scan(&u.Id, &u.Username, &u.Password, &u.CreatedAt)
+		if err != nil {
+			log.Println("Errror Scan All: ", err)
+		}
+		users = append(users, u)
+	}
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("%#v", users)
+
+	err = page.Execute(w, users)
 	if err != nil {
 		log.Fatal("Execute: ", err)
 	}
