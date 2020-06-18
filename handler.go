@@ -34,12 +34,17 @@ func CreateUser(username, password string) {
 // Read user reads a user from users table
 func ReadUser(username, password string) (string, string) {
 
+	var (
+		usernamedb string
+		passworddb string
+	)
+
 	query := "SELECT username, password FROM userss WHERE username = ?"
-	if err := db.QueryRow(query, username).Scan(&username, &password); err != nil {
+	if err := db.QueryRow(query, username).Scan(&usernamedb, &passworddb); err != nil {
 		log.Println("Read User Error : ", err)
 	}
 
-	return username, password
+	return usernamedb, passworddb
 }
 
 // Login Controller
@@ -56,6 +61,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 
 		dbusername, dbpassword := ReadUser(username, password)
+
+		log.Println("NOt exists : ", dbusername, dbpassword)
 
 		if username == dbusername && password == dbpassword {
 
@@ -90,17 +97,26 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 		password2 := r.FormValue("password2")
 
-		if password == password2 {
+		dbusername, _ := ReadUser(username, password)
 
-			CreateUser(username, password)
+		if username != dbusername {
 
-			data.Message = "Registered Successfully."
-			log.Println(data.Message)
+			if password == password2 {
 
+				CreateUser(username, password)
+
+				data.Message = "Registered Successfully."
+				log.Println(data.Message)
+
+			} else {
+				data.Message = "Passwords Doesn't Match !!"
+				log.Println(data.Message)
+			}
 		} else {
-			data.Message = "Passwords Doesn't Match !!"
+			data.Message = "Already Registered!"
 			log.Println(data.Message)
 		}
+
 	}
 
 	err = page.Execute(w, data)
