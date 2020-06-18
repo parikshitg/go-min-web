@@ -14,21 +14,29 @@ type User struct {
 	CreatedAt time.Time
 }
 
+type Data struct {
+	Message string
+}
+
+var data Data
+
+// Create user function creates a new user in users table
 func CreateUser(username, password string) {
 
 	createdAt := time.Now()
 
 	_, err := db.Exec(`INSERT INTO userss (username, password, created_at) VALUES (?, ?, ?)`, username, password, createdAt)
 	if err != nil {
-		log.Fatal("Insert Error : ", err)
+		log.Println("Insert Error : ", err)
 	}
 }
 
+// Read user reads a user from users table
 func ReadUser(username, password string) (string, string) {
 
 	query := "SELECT username, password FROM userss WHERE username = ?"
 	if err := db.QueryRow(query, username).Scan(&username, &password); err != nil {
-		log.Fatal("Read User Error : ", err)
+		log.Println("Read User Error : ", err)
 	}
 
 	return username, password
@@ -36,6 +44,11 @@ func ReadUser(username, password string) (string, string) {
 
 // Login Controller
 func Login(w http.ResponseWriter, r *http.Request) {
+
+	page, err := template.ParseFiles("templates/login.html")
+	if err != nil {
+		log.Fatal("ParseFiles: ", err)
+	}
 
 	if r.Method == http.MethodPost {
 
@@ -45,31 +58,31 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		dbusername, dbpassword := ReadUser(username, password)
 
 		if username == dbusername && password == dbpassword {
-			pages := template.Must(template.ParseFiles("templates/dashboard.html"))
 
-			err := pages.Execute(w, nil)
-			if err != nil {
-				log.Fatal("Execute : ", err)
-			}
-		}
+			http.Redirect(w, r, "/dashboard", 301)
 
-	} else {
+			data.Message = "You have been logged in Successfully."
+			log.Println(data.Message)
 
-		page, err := template.ParseFiles("templates/login.html")
-		if err != nil {
-			log.Fatal("ParseFiles: ", err)
-		}
-
-		err = page.Execute(w, nil)
-		if err != nil {
-			log.Fatal("Execute:", err)
+		} else {
+			data.Message = "Invalid username or password!!"
+			log.Println(data.Message)
 		}
 	}
 
+	err = page.Execute(w, data)
+	if err != nil {
+		log.Fatal("Execute:", err)
+	}
 }
 
 // Register Controller
 func Register(w http.ResponseWriter, r *http.Request) {
+
+	page, err := template.ParseFiles("templates/register.html")
+	if err != nil {
+		log.Fatal("ParseFiles :", err)
+	}
 
 	if r.Method == http.MethodPost {
 
@@ -77,25 +90,22 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 		password2 := r.FormValue("password2")
 
-		if password != password2 {
-			log.Fatal("password not equal to password 2")
-			return
+		if password == password2 {
+
+			CreateUser(username, password)
+
+			data.Message = "Registered Successfully."
+			log.Println(data.Message)
+
+		} else {
+			data.Message = "Passwords Doesn't Match !!"
+			log.Println(data.Message)
 		}
+	}
 
-		CreateUser(username, password)
-
-	} else {
-
-		page, err := template.ParseFiles("templates/register.html")
-		if err != nil {
-			log.Fatal("ParseFiles :", err)
-		}
-
-		err = page.Execute(w, nil)
-		if err != nil {
-			log.Fatal("Execute:", err)
-		}
-
+	err = page.Execute(w, data)
+	if err != nil {
+		log.Fatal("Execute:", err)
 	}
 }
 
