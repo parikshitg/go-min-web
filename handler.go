@@ -11,7 +11,7 @@ type User struct {
 	Id        string
 	Username  string
 	Password  string
-	CreatedAt []uint8
+	CreatedAt string
 }
 
 type Data struct {
