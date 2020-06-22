@@ -26,7 +26,7 @@ func main() {
 
 	// Create a database table
 	query := `
-            CREATE TABLE IF NOT EXISTS userss (
+            CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT,
                 username TEXT NOT NULL,
                 password TEXT NOT NULL,

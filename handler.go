@@ -14,18 +14,18 @@ type User struct {
 	CreatedAt string
 }
 
-type Data struct {
+type Flash struct {
 	Message string
 }
 
-var data Data
+var flash Flash
 
 // Create user function creates a new user in users table
 func CreateUser(username, password string) {
 
 	createdAt := time.Now()
 
-	_, err := db.Exec(`INSERT INTO userss (username, password, created_at) VALUES (?, ?, ?)`, username, password, createdAt)
+	_, err := db.Exec(`INSERT INTO users (username, password, created_at) VALUES (?, ?, ?)`, username, password, createdAt)
 	if err != nil {
 		log.Println("Insert Error : ", err)
 	}
@@ -34,12 +34,9 @@ func CreateUser(username, password string) {
 // Read user reads a user from users table
 func ReadUser(username, password string) (string, string) {
 
-	var (
-		usernamedb string
-		passworddb string
-	)
+	var usernamedb, passworddb string
 
-	query := "SELECT username, password FROM userss WHERE username = ?"
+	query := "SELECT username, password FROM users WHERE username = ?"
 	if err := db.QueryRow(query, username).Scan(&usernamedb, &passworddb); err != nil {
 		log.Println("Read User Error : ", err)
 	}
@@ -60,24 +57,28 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
-		dbusername, dbpassword := ReadUser(username, password)
+		if username == "" || password == "" {
 
-		log.Println("NOt exists : ", dbusername, dbpassword)
-
-		if username == dbusername && password == dbpassword {
-
-			http.Redirect(w, r, "/dashboard", 301)
-
-			data.Message = "You have been logged in Successfully."
-			log.Println(data.Message)
-
+			flash.Message = "Fields can not be empty!!"
+			log.Println(flash.Message)
 		} else {
-			data.Message = "Invalid username or password!!"
-			log.Println(data.Message)
+
+			dbusername, dbpassword := ReadUser(username, password)
+
+			if username == dbusername && password == dbpassword {
+
+				http.Redirect(w, r, "/dashboard", 301)
+
+				log.Println("You have been logged in Successfully.")
+
+			} else {
+				flash.Message = "Invalid username or password!!"
+				log.Println(flash.Message)
+			}
 		}
 	}
 
-	err = page.Execute(w, data)
+	err = page.Execute(w, flash)
 	if err != nil {
 		log.Fatal("Execute:", err)
 	}
@@ -93,33 +94,47 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 
+		// post form values
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		password2 := r.FormValue("password2")
 
-		dbusername, _ := ReadUser(username, password)
+		// Checking if form fields are empty
+		if username == "" || password == "" || password2 == "" {
 
-		if username != dbusername {
-
-			if password == password2 {
-
-				CreateUser(username, password)
-
-				data.Message = "Registered Successfully."
-				log.Println(data.Message)
-
-			} else {
-				data.Message = "Passwords Doesn't Match !!"
-				log.Println(data.Message)
-			}
+			flash.Message = "Fields Can not be empty!!"
+			log.Println(flash.Message)
 		} else {
-			data.Message = "Already Registered!"
-			log.Println(data.Message)
-		}
 
+			// Check if user already present in database
+			dbusername, dbpassword := ReadUser(username, password)
+
+			if dbusername != "" || dbpassword != "" {
+
+				flash.Message = "User Already Registered!!"
+				log.Println(flash.Message)
+			} else {
+
+				if username != dbusername {
+
+					if password == password2 {
+
+						CreateUser(username, password)
+						flash.Message = "Registered Successfully."
+						log.Println(flash.Message)
+					} else {
+						flash.Message = "Passwords Doesn't Match !!"
+						log.Println(flash.Message)
+					}
+				} else {
+					flash.Message = "This username is taken."
+					log.Println(flash.Message)
+				}
+			}
+		}
 	}
 
-	err = page.Execute(w, data)
+	err = page.Execute(w, flash)
 	if err != nil {
 		log.Fatal("Execute:", err)
 	}
@@ -134,7 +149,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Read All users
-	rows, err := db.Query(`SELECT id, username, password, created_at FROM userss`)
+	rows, err := db.Query(`SELECT id, username, password, created_at FROM users`)
 	if err != nil {
 		log.Println("Error Read ALl : ", err)
 	}
@@ -150,10 +165,10 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 		users = append(users, u)
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatal(err)
+		log.Fatal("Rows Error : ", err)
 	}
 
-	log.Printf("%#v", users)
+	// log.Printf("%#v", users)
 
 	err = page.Execute(w, users)
 	if err != nil {
