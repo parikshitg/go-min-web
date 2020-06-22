@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/sessions"
 )
 
 type User struct {
@@ -19,6 +21,10 @@ type Flash struct {
 }
 
 var flash Flash
+
+// initialize session key
+var key = []byte("super-secret-key")
+var store = sessions.NewCookieStore(key)
 
 // Create user function creates a new user in users table
 func CreateUser(username, password string) {
@@ -67,7 +73,15 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 			if username == dbusername && password == dbpassword {
 
-				http.Redirect(w, r, "/dashboard", 301)
+				// setting up a session
+				session, err := store.Get(r, "cookie-name")
+				if err != nil {
+					log.Println("Session Error:", err)
+				}
+				session.Values["authenticated"] = true
+				session.Save(r, w)
+
+				http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 
 				log.Println("You have been logged in Successfully.")
 
@@ -173,5 +187,50 @@ func Dashboard(w http.ResponseWriter, r *http.Request) {
 	err = page.Execute(w, users)
 	if err != nil {
 		log.Fatal("Execute: ", err)
+	}
+}
+
+// Logout function
+func Logout(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "cookie-name")
+
+	session.Values["authenticated"] = false
+	session.Save(r, w)
+}
+
+// Checks if user is authenticated (middleware)
+func AuthenticatedUser(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		session, _ := store.Get(r, "cookie-name")
+
+		cookie, ok := session.Values["authenticated"]
+
+		log.Println("AUTHENTICATEDUSER", r.URL.Path, "cookie : ", cookie, "ok : ", ok)
+
+		if cookie == true && ok {
+			f(w, r)
+		} else {
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+		}
+
+	}
+}
+
+// checks unauthenticated user (middleware)
+func UnauthenticatedUser(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		session, _ := store.Get(r, "cookie-name")
+
+		cookie, ok := session.Values["authenticated"]
+
+		log.Println("UNAUTHENTICATEDUSER", r.URL.Path, " cookie : ", cookie, "ok : ", ok)
+
+		if cookie == true && ok {
+			http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		} else {
+			f(w, r)
+		}
 	}
 }

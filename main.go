@@ -14,7 +14,7 @@ var db *sql.DB
 func main() {
 
 	var err error
-	// Create a database
+	// Open a database
 	db, err = sql.Open("mysql", "root:parikshitg@tcp(127.0.0.1:3306)/testingdb")
 	if err != nil {
 		fmt.Println("Db Open Error:", err)
@@ -40,11 +40,10 @@ func main() {
 
 	fmt.Println("Successfully Create Table")
 
-	http.Handle("/login", http.HandlerFunc(Login))
-	http.Handle("/register", http.HandlerFunc(Register))
-	http.Handle("/dashboard", http.HandlerFunc(Dashboard))
-
-	// http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("static/css"))))
+	http.Handle("/login", http.HandlerFunc(UnauthenticatedUser(Login)))
+	http.Handle("/logout", http.HandlerFunc(AuthenticatedUser(Logout)))
+	http.Handle("/register", http.HandlerFunc(UnauthenticatedUser(Register)))
+	http.Handle("/dashboard", http.HandlerFunc(AuthenticatedUser(Dashboard)))
 
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fs)
