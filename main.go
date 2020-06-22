@@ -7,20 +7,20 @@ import (
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
+	h "github.com/parikshitg/go-min-web/handlers"
+	"github.com/parikshitg/go-min-web/middlewares"
 )
-
-var db *sql.DB
 
 func main() {
 
 	var err error
 	// Open a database
-	db, err = sql.Open("mysql", "root:parikshitg@tcp(127.0.0.1:3306)/testingdb")
+	h.Db, err = sql.Open("mysql", "root:parikshitg@tcp(127.0.0.1:3306)/testingdb")
 	if err != nil {
 		fmt.Println("Db Open Error:", err)
 	}
 
-	defer db.Close()
+	defer h.Db.Close()
 
 	fmt.Println("Successfully connected to Database.")
 
@@ -34,16 +34,16 @@ func main() {
                 PRIMARY KEY (id)
             );`
 
-	if _, err := db.Exec(query); err != nil {
+	if _, err := h.Db.Exec(query); err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Println("Successfully Create Table")
 
-	http.Handle("/login", http.HandlerFunc(UnauthenticatedUser(Login)))
-	http.Handle("/logout", http.HandlerFunc(AuthenticatedUser(Logout)))
-	http.Handle("/register", http.HandlerFunc(UnauthenticatedUser(Register)))
-	http.Handle("/dashboard", http.HandlerFunc(AuthenticatedUser(Dashboard)))
+	http.Handle("/login", middlewares.UnauthenticatedUser(h.Login))
+	http.Handle("/logout", middlewares.AuthenticatedUser(h.Logout))
+	http.Handle("/register", middlewares.UnauthenticatedUser(h.Register))
+	http.Handle("/dashboard", middlewares.AuthenticatedUser(h.Dashboard))
 
 	fs := http.FileServer(http.Dir("./static"))
 	http.Handle("/", fs)
