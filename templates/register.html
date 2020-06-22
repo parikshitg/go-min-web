@@ -2,20 +2,16 @@
 <html>
 <head>
 	<title>REGISTER</title>
+    <link rel="stylesheet" type="text/css" href="/css/style.css">
 </head>
 <body>
-<h1>Register Page</h1>
-	
-	<h3>{{ .Message }}</h3>
-	
-<form method="POST">
-        <label>Username:</label><br />
-        <input type="text" name="username"><br />
-        <label>Password:</label><br />
-        <input type="text" name="password"><br />
-        <label>Re-Enter Password:</label><br />
-        <input type="text" name="password2"><br />
-        <input type="submit">
+<form method="POST" action="/register" class="box">
+        <h1>REGISTER</h1>
+        <h3>{{ .Message }}</h3>
+        <input type="text" name="username" placeholder="username">
+        <input type="password" name="password" placeholder="password">
+        <input type="password" name="password2" placeholder="re-enter password">
+        <input type="submit" value="Register">
     </form>
 </body>
 </html>

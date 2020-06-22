@@ -44,5 +44,10 @@ func main() {
 	http.Handle("/register", http.HandlerFunc(Register))
 	http.Handle("/dashboard", http.HandlerFunc(Dashboard))
 
+	// http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("static/css"))))
+
+	fs := http.FileServer(http.Dir("./static"))
+	http.Handle("/", fs)
+
 	http.ListenAndServe(":8080", nil)
 }
