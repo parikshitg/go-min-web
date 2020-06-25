@@ -12,7 +12,7 @@ Go-min-web is a dynamic website with minimal go code. This website has 3 pages l
 
 ## List of Directories  & Files
 
-![alt text](https://github.com/parikshitg/go-min-web/tree/master/static/images/tree.png?raw=true)
+![alt text](https://github.com/parikshitg/go-min-web/blob/master/static/images/tree.png)
 
 ### handlers
 This directory consist all the handlers code of the website. There are 4 handlers Login, Register, Logout & Dashboard.
